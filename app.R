@@ -136,9 +136,9 @@ server <- shinyServer(function(input, output) {
     )
     
     #Import English model from udpipe library
-    model <- udpipe_download_model(language = "english")
+    #model <- udpipe_download_model(language = "english")
     udmodel_english <-
-      udpipe_load_model(file = 'english-ud-2.0-170801.udpipe')
+    udpipe_load_model(file = 'english-ud-2.0-170801.udpipe')
     
     #Annotating the corpus
     news <- udpipe_annotate(udmodel_english, news$headline_text)
