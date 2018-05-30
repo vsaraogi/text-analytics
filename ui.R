@@ -1,3 +1,4 @@
+# Define UI function
 ui <- shinyUI(fluidPage(
   theme = shinytheme("spacelab"),
   
@@ -50,7 +51,9 @@ ui <- shinyUI(fluidPage(
           "Overview",
           br(),
           h4(p("Features")),
-          p("This app uses UDPipe to create Annotated document from the uploaded file."),
+          p(
+            "This app uses UDPipe to create Annotated document from the uploaded file."
+          ),
           p("The app also creates Wordcloud for the Noun and Verb tokens."),
           p("The app supports coocurrence plot for top 30 most occuring tokesn."),
           br(),
@@ -59,7 +62,9 @@ ui <- shinyUI(fluidPage(
             "This app supports only comma separated values (.csv) data file. CSV data file should have headers with two columns.",
             align = "justify"
           ),
-          p("The first column contains date with format as YYYYMMDD, the second column contains text."),
+          p(
+            "The first column contains date with format as YYYYMMDD, the second column contains text."
+          ),
           br(),
           h4('How to use this App'),
           p(
@@ -67,8 +72,12 @@ ui <- shinyUI(fluidPage(
             span(strong("Upload data (csv file with header)")),
             'and upload the csv data file.'
           ),
-          p("You can also change the Parts of Speech to modify the Cooccurences Plot."),
-          p("You can select the records to display, head displays top 6 records and the other option top 100 records.")
+          p(
+            "You can also change the Parts of Speech to modify the Cooccurences Plot."
+          ),
+          p(
+            "You can select the records to display, head displays top 6 records and the other option top 100 records."
+          )
         ),
         
         tabPanel("Data",

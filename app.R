@@ -103,7 +103,9 @@ ui <- shinyUI(fluidPage(
           "Overview",
           br(),
           h4(p("Features")),
-          p("This app uses UDPipe to create Annotated document from the uploaded file."),
+          p(
+            "This app uses UDPipe to create Annotated document from the uploaded file."
+          ),
           p("The app also creates Wordcloud for the Noun and Verb tokens."),
           p("The app supports coocurrence plot for top 30 most occuring tokesn."),
           br(),
@@ -112,7 +114,9 @@ ui <- shinyUI(fluidPage(
             "This app supports only comma separated values (.csv) data file. CSV data file should have headers with two columns.",
             align = "justify"
           ),
-          p("The first column contains date with format as YYYYMMDD, the second column contains text."),
+          p(
+            "The first column contains date with format as YYYYMMDD, the second column contains text."
+          ),
           br(),
           h4('How to use this App'),
           p(
@@ -120,8 +124,12 @@ ui <- shinyUI(fluidPage(
             span(strong("Upload data (csv file with header)")),
             'and upload the csv data file.'
           ),
-          p("You can also change the Parts of Speech to modify the Cooccurences Plot."),
-          p("You can select the records to display, head displays top 6 records and the other option top 100 records.")
+          p(
+            "You can also change the Parts of Speech to modify the Cooccurences Plot."
+          ),
+          p(
+            "You can select the records to display, head displays top 6 records and the other option top 100 records."
+          )
         ),
         
         tabPanel("Data",
@@ -179,8 +187,10 @@ server <- shinyServer(function(input, output) {
     #Dataframe to be used across the app
     news <- subset(news, upos %in% input$upos)
     
+    return (news)
+    
   })
-
+  
   output$contents <- renderTable({
     # input$file will be NULL initially. After the user selects
     # and uploads a file, head of that data file by default,
@@ -200,7 +210,6 @@ server <- shinyServer(function(input, output) {
   })
   
   output$ann_doc <- renderDataTable({
-    
     news <- data()
     
     news_wo_sent <- subset(news, select = -c(sentence, sentence_id))
@@ -216,14 +225,17 @@ server <- shinyServer(function(input, output) {
     #Wordcloud for all the Noun
     stats.noun <- subset(news, upos %in% c("NOUN"))
     
-    pal = brewer.pal(8,"Dark2")
-    wordcloud(words = stats.noun$token, 
-              min.freq=1,max_freq=200,
-              scale = c(3.5, 0.5),
-              rot.per=0.35,
-              random.order = F,
-              random.color = T,
-              colors = pal)
+    pal = brewer.pal(8, "Dark2")
+    wordcloud(
+      words = stats.noun$token,
+      min.freq = 1,
+      max_freq = 200,
+      scale = c(3.5, 0.5),
+      rot.per = 0.35,
+      random.order = F,
+      random.color = T,
+      colors = pal
+    )
     
   })
   
@@ -233,27 +245,29 @@ server <- shinyServer(function(input, output) {
     #Wordcloud for all the Verb
     stats.verb <- subset(news, upos %in% c("VERB"))
     
-   
-     pal = brewer.pal(8,"Dark2")
-    wordcloud(words = stats.verb$token, 
-              min.freq=1,max_freq=200,
-              scale = c(3.5, 0.5),
-              rot.per=0.35,
-              random.order = F,
-              random.color = T,
-              colors = pal)
+    
+    pal = brewer.pal(8, "Dark2")
+    wordcloud(
+      words = stats.verb$token,
+      min.freq = 1,
+      max_freq = 200,
+      scale = c(3.5, 0.5),
+      rot.per = 0.35,
+      random.order = F,
+      random.color = T,
+      colors = pal
+    )
   })
   
   #Downloadable csv of selected dataset
   output$downloadData <- downloadHandler(
-    news <- data(),
-    
     filename = function() {
-      paste("ann_doc", ".csv",sep="")
+      "annotated_data.csv"
     },
     
     content = function(file) {
-      write.csv(news, file)
+      write.csv(data()[, -4], file, row.names = F)
+      
     }
   )
   
@@ -267,20 +281,20 @@ server <- shinyServer(function(input, output) {
       )
     
     wordnetwork <- head(news, 30)
-
+    
     wordnetwork <- igraph::graph_from_data_frame(wordnetwork)
-
+    
     ggraph(wordnetwork, layout = "fr") +
       geom_edge_link(aes(width = cooc, edge_alpha = cooc), edge_colour =
                        "orange") +
       geom_node_text(aes(label = name), colour = "darkgreen", size = 10) +
-
+      
       theme_graph(base_family = "Arial Narrow") +
       theme(legend.position = "none") +
       labs(title = "Cooccurrences Plot", subtitle = "Nouns & Adjective")
-
+    
   })
-
+  
 })
 
 shinyApp(ui = ui, server = server)

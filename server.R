@@ -1,3 +1,4 @@
+
 # Define Server function
 server <- shinyServer(function(input, output) {
   data <- reactive({
@@ -27,6 +28,8 @@ server <- shinyServer(function(input, output) {
     #Dataframe to be used across the app
     news <- subset(news, upos %in% input$upos)
     
+    return (news)
+    
   })
   
   output$contents <- renderTable({
@@ -48,7 +51,6 @@ server <- shinyServer(function(input, output) {
   })
   
   output$ann_doc <- renderDataTable({
-    
     news <- data()
     
     news_wo_sent <- subset(news, select = -c(sentence, sentence_id))
@@ -64,14 +66,17 @@ server <- shinyServer(function(input, output) {
     #Wordcloud for all the Noun
     stats.noun <- subset(news, upos %in% c("NOUN"))
     
-    pal = brewer.pal(8,"Dark2")
-    wordcloud(words = stats.noun$token, 
-              min.freq=1,max_freq=200,
-              scale = c(3.5, 0.5),
-              rot.per=0.35,
-              random.order = F,
-              random.color = T,
-              colors = pal)
+    pal = brewer.pal(8, "Dark2")
+    wordcloud(
+      words = stats.noun$token,
+      min.freq = 1,
+      max_freq = 200,
+      scale = c(3.5, 0.5),
+      rot.per = 0.35,
+      random.order = F,
+      random.color = T,
+      colors = pal
+    )
     
   })
   
@@ -82,26 +87,28 @@ server <- shinyServer(function(input, output) {
     stats.verb <- subset(news, upos %in% c("VERB"))
     
     
-    pal = brewer.pal(8,"Dark2")
-    wordcloud(words = stats.verb$token, 
-              min.freq=1,max_freq=200,
-              scale = c(3.5, 0.5),
-              rot.per=0.35,
-              random.order = F,
-              random.color = T,
-              colors = pal)
+    pal = brewer.pal(8, "Dark2")
+    wordcloud(
+      words = stats.verb$token,
+      min.freq = 1,
+      max_freq = 200,
+      scale = c(3.5, 0.5),
+      rot.per = 0.35,
+      random.order = F,
+      random.color = T,
+      colors = pal
+    )
   })
   
   #Downloadable csv of selected dataset
   output$downloadData <- downloadHandler(
-    news <- data(),
-    
     filename = function() {
-      paste("ann_doc", ".csv",sep="")
+      "annotated_data.csv"
     },
     
     content = function(file) {
-      write.csv(news, file)
+      write.csv(data()[, -4], file, row.names = F)
+      
     }
   )
   
