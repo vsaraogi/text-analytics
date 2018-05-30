@@ -1,4 +1,7 @@
-#Displaying UDPipe NLP Workflow using ShinyApp
+#TA Group Assignment 2
+#Srikanth Yarlagadda | Surabhi Kumar | Varun Saraogi
+
+#UDPipe NLP Workflow using ShinyApp
 
 #Import the Packages
 suppressPackageStartupMessages({
@@ -26,13 +29,31 @@ suppressPackageStartupMessages({
     install.packages("wodcloud")
   }
   library(wordcloud)
+  if (!require(ggraph)) {
+    install.packages("ggraph")
+  }
+  library(ggraph)
+  if (!require(igraph)) {
+    install.packages("igraph")
+  }
+  library(igraph)
+  if (!require(shinythemes)) {
+    install.packages("shinythemes")
+  }
+  library(shinythemes)
+  if (!require(RColorBrewer)) {
+    install.packages("RColorBrewer")
+  }
+  library(RColorBrewer)
 })
 
 #Increasing the file upload limit to 30MB
-#options(shiny.maxRequestSize = 30*1024^2)
+#options(shiny.maxRequestSize = 60 * 1024 ^ 2)
 
 # Define UI function
 ui <- shinyUI(fluidPage(
+  theme = shinytheme("spacelab"),
+  
   titlePanel("NLP Worklflow using UDPipe"),
   
   sidebarLayout(
@@ -60,7 +81,7 @@ ui <- shinyUI(fluidPage(
           "Adverb" = "ADV",
           "Verb" = "VERB"
         ),
-        selected = c("ADJ", "NOUN", "PROPN")
+        selected = c("ADJ", "NOUN", "VERB")
       ),
       
       #Input: Select number of rows to display
@@ -68,7 +89,7 @@ ui <- shinyUI(fluidPage(
         "disp",
         "Display Data:",
         choices = c(Head = "head",
-                    All = "all"),
+                    Top100 = "top100"),
         selected = "head"
       )
       
@@ -80,19 +101,27 @@ ui <- shinyUI(fluidPage(
         
         tabPanel(
           "Overview",
+          br(),
+          h4(p("Features")),
+          p("This app uses UDPipe to create Annotated document from the uploaded file."),
+          p("The app also creates Wordcloud for the Noun and Verb tokens."),
+          p("The app supports coocurrence plot for top 30 most occuring tokesn."),
+          br(),
           h4(p("Data input")),
           p(
-            "This app supports only comma separated values (.csv) data file. CSV data file should have headers.",
+            "This app supports only comma separated values (.csv) data file. CSV data file should have headers with two columns.",
             align = "justify"
           ),
-          p("Please refer to the link below for sample csv file."),
+          p("The first column contains date with format as YYYYMMDD, the second column contains text."),
           br(),
           h4('How to use this App'),
           p(
             'To use this app, click on',
             span(strong("Upload data (csv file with header)")),
-            'and upload the csv data file. You can also change the Parts of Speech to modify the Cooccurences Plot'
-          )
+            'and upload the csv data file.'
+          ),
+          p("You can also change the Parts of Speech to modify the Cooccurences Plot."),
+          p("You can select the records to display, head displays top 6 records and the other option top 100 records.")
         ),
         
         tabPanel("Data",
@@ -100,9 +129,11 @@ ui <- shinyUI(fluidPage(
         
         tabPanel(
           "Annotated  Documents",
-          dataTableOutput('ann_doc'),
-          downloadButton("downloadData", "Download")
-          #,tableOutput("ann_doc_file")
+          br(),
+          downloadButton("downloadData", "Download"),
+          br(),
+          br(),
+          dataTableOutput('ann_doc')
         ),
         
         tabPanel(
@@ -138,7 +169,7 @@ server <- shinyServer(function(input, output) {
     #Import English model from udpipe library
     #model <- udpipe_download_model(language = "english")
     udmodel_english <-
-    udpipe_load_model(file = 'english-ud-2.0-170801.udpipe')
+      udpipe_load_model(file = 'english-ud-2.0-170801.udpipe')
     
     #Annotating the corpus
     news <- udpipe_annotate(udmodel_english, news$headline_text)
@@ -149,8 +180,7 @@ server <- shinyServer(function(input, output) {
     news <- subset(news, upos %in% input$upos)
     
   })
-  
-  
+
   output$contents <- renderTable({
     # input$file will be NULL initially. After the user selects
     # and uploads a file, head of that data file by default,
@@ -170,6 +200,7 @@ server <- shinyServer(function(input, output) {
   })
   
   output$ann_doc <- renderDataTable({
+    
     news <- data()
     
     news_wo_sent <- subset(news, select = -c(sentence, sentence_id))
@@ -184,13 +215,15 @@ server <- shinyServer(function(input, output) {
     
     #Wordcloud for all the Noun
     stats.noun <- subset(news, upos %in% c("NOUN"))
-    wordcloud(
-      stats.noun$token,
-      scale = c(4, 0.5),
-      title = 'Noun',
-      #min.freq = 0, max.words=100,
-      colors = brewer.pal(8, "Dark2")
-    )
+    
+    pal = brewer.pal(8,"Dark2")
+    wordcloud(words = stats.noun$token, 
+              min.freq=1,max_freq=200,
+              scale = c(3.5, 0.5),
+              rot.per=0.35,
+              random.order = F,
+              random.color = T,
+              colors = pal)
     
   })
   
@@ -199,14 +232,16 @@ server <- shinyServer(function(input, output) {
     
     #Wordcloud for all the Verb
     stats.verb <- subset(news, upos %in% c("VERB"))
-    wordcloud(
-      stats.verb$token,
-      scale = c(4, 0.5),
-      title = 'Verb',
-      #min.freq = 0, max.words=100,
-      colors = brewer.pal(8, "Dark2")
-    )
     
+   
+     pal = brewer.pal(8,"Dark2")
+    wordcloud(words = stats.verb$token, 
+              min.freq=1,max_freq=200,
+              scale = c(3.5, 0.5),
+              rot.per=0.35,
+              random.order = F,
+              random.color = T,
+              colors = pal)
   })
   
   #Downloadable csv of selected dataset
@@ -214,42 +249,38 @@ server <- shinyServer(function(input, output) {
     news <- data(),
     
     filename = function() {
-      paste("ann_doc", ".csv", sep = "")
+      paste("ann_doc", ".csv",sep="")
     },
     
     content = function(file) {
-      write.csv(news, file, row.names = FALSE)
+      write.csv(news, file)
     }
   )
   
   
   output$cog <- renderPlot({
-    x <- data()
-    
-    x$phrase_tag <- as_phrasemachine(x$upos, type = "upos")
-    #Convert Parts Of Speech Tags To One-Letter Tags Which Can Be Used To Identify Phrases Based On Regular Expressions
-    stats <-
-      keywords_phrases(
-        x = x$phrase_tag,
-        term = tolower(x$token),
-        pattern = "(A|N)*N(P+D*(A|N)*N)*",
-        is_regex = TRUE,
-        detailed = FALSE
-      ) #Identifying Noun Phrase with the Regular Expression given
-    stats <- subset(stats, ngram > 1 & freq > 3)
-    stats$key <- factor(stats$keyword, levels = rev(stats$keyword))
-    a <-
-      barchart(
-        key ~ freq,
-        data = head(stats, 20),
-        col = "magenta",
-        main = "Keywords - simple noun phrases",
-        xlab = "Frequency"
+    news <-
+      cooccurrence(
+        x = subset(data(), upos %in% input$upos),
+        term = "lemma",
+        group = c("doc_id", "paragraph_id", "sentence_id")
       )
-    a
+    
+    wordnetwork <- head(news, 30)
+
+    wordnetwork <- igraph::graph_from_data_frame(wordnetwork)
+
+    ggraph(wordnetwork, layout = "fr") +
+      geom_edge_link(aes(width = cooc, edge_alpha = cooc), edge_colour =
+                       "orange") +
+      geom_node_text(aes(label = name), colour = "darkgreen", size = 10) +
+
+      theme_graph(base_family = "Arial Narrow") +
+      theme(legend.position = "none") +
+      labs(title = "Cooccurrences Plot", subtitle = "Nouns & Adjective")
+
   })
-  
-  
+
 })
 
 shinyApp(ui = ui, server = server)
